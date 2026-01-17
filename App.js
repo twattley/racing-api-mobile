@@ -34,13 +34,13 @@ const FeedbackStack = createNativeStackNavigator();
 function TodayStackScreen() {
   return (
     <TodayStack.Navigator>
-      <TodayStack.Screen 
-        name="TodaysRaces" 
+      <TodayStack.Screen
+        name="TodaysRaces"
         component={TodaysRacesScreen}
         options={{ title: "Today's Races" }}
       />
-      <TodayStack.Screen 
-        name="RaceDetails" 
+      <TodayStack.Screen
+        name="RaceDetails"
         component={RaceDetailsScreen}
         options={{ title: 'Race Details' }}
       />
@@ -51,13 +51,13 @@ function TodayStackScreen() {
 function BettingStackScreen() {
   return (
     <BettingStack.Navigator>
-      <BettingStack.Screen 
-        name="LiveBetting" 
+      <BettingStack.Screen
+        name="LiveBetting"
         component={LiveBettingScreen}
         options={{ title: 'Live Bets' }}
       />
-      <BettingStack.Screen 
-        name="BettingResults" 
+      <BettingStack.Screen
+        name="BettingResults"
         component={BettingResultsScreen}
         options={{ title: 'Results' }}
       />
@@ -68,13 +68,13 @@ function BettingStackScreen() {
 function FeedbackStackScreen() {
   return (
     <FeedbackStack.Navigator>
-      <FeedbackStack.Screen 
-        name="FeedbackRaces" 
+      <FeedbackStack.Screen
+        name="FeedbackRaces"
         component={FeedbackRacesScreen}
         options={{ title: 'Feedback' }}
       />
-      <FeedbackStack.Screen 
-        name="FeedbackRaceDetails" 
+      <FeedbackStack.Screen
+        name="FeedbackRaceDetails"
         component={FeedbackRaceDetailsScreen}
         options={{ title: 'Race Review' }}
       />

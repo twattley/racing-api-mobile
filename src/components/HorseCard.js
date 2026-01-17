@@ -78,7 +78,7 @@ export default function HorseCard({
         >
           <Text style={styles.contenderButtonText}>C</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={[
             styles.contenderButton,
@@ -116,7 +116,7 @@ export default function HorseCard({
           <View style={styles.statBox}>
             <Text style={styles.statValue}>{horse.todays_official_rating || '-'}</Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.statBox, styles.priceBox]}
             onPress={() => handlePriceClick('win', horse.todays_betfair_win_sp)}
           >
@@ -130,7 +130,7 @@ export default function HorseCard({
 
       {/* Stats row */}
       <View style={styles.statsContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.miniStat}
           onPress={() => handlePriceClick('place', horse.todays_betfair_place_sp)}
         >
@@ -181,17 +181,17 @@ export default function HorseCard({
 // Separate component for expandable form rows
 function FormRow({ perf }) {
   const [expanded, setExpanded] = useState(false);
-  
-  const hasRpComment = perf.rp_comment && 
+
+  const hasRpComment = perf.rp_comment &&
     perf.rp_comment.toLowerCase() !== 'no comment available';
-  
+
   return (
     <TouchableOpacity onPress={() => setExpanded(!expanded)}>
       <View style={styles.formRow}>
         <Text style={styles.formDate}>
-          {new Date(perf.race_date).toLocaleDateString('en-GB', { 
-            day: '2-digit', 
-            month: 'short' 
+          {new Date(perf.race_date).toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: 'short'
           })}
         </Text>
         <Text style={styles.formCourse} numberOfLines={1}>
@@ -211,7 +211,7 @@ function FormRow({ perf }) {
           {perf.betfair_win_sp || '-'}
         </Text>
       </View>
-      
+
       {/* Comments section */}
       {perf.tf_comment && (
         <View style={styles.commentContainer}>
@@ -227,7 +227,7 @@ function FormRow({ perf }) {
           )}
         </View>
       )}
-      
+
       {/* Expanded main race comment */}
       {expanded && perf.main_race_comment && (
         <View style={styles.expandedComment}>

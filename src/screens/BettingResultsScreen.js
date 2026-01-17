@@ -138,15 +138,15 @@ export default function BettingResultsScreen({ navigation }) {
             </Text>
             <View style={[
               styles.outcomeBadge,
-              bet.outcome === 'WON' ? styles.won : 
-              bet.outcome === 'LOST' ? styles.lost : styles.pending
+              bet.outcome === 'WON' ? styles.won :
+                bet.outcome === 'LOST' ? styles.lost : styles.pending
             ]}>
               <Text style={styles.outcomeBadgeText}>{bet.outcome || '-'}</Text>
             </View>
           </View>
           <View style={styles.betDetails}>
             <Text style={styles.betDetail}>
-              {new Date(bet.created_at).toLocaleDateString()} • 
+              {new Date(bet.created_at).toLocaleDateString()} •
               {bet.selection_type} @ {bet.price_matched?.toFixed(2) || '-'}
             </Text>
             <Text style={[

@@ -3,10 +3,10 @@ import { getApiBase } from './config';
 
 export async function api(url, options = {}) {
   const apiBase = await getApiBase();
-  
+
   // Build absolute URL
   const absoluteUrl = url.startsWith('http') ? url : `${apiBase}${url}`;
-  
+
   try {
     const res = await fetch(absoluteUrl, {
       ...options,
@@ -15,12 +15,12 @@ export async function api(url, options = {}) {
         ...options.headers,
       },
     });
-    
+
     if (!res.ok) {
       const text = await res.text().catch(() => '');
       throw new Error(`Request failed ${res.status}: ${text || res.statusText}`);
     }
-    
+
     const ct = res.headers.get('content-type') || '';
     if (ct.includes('application/json')) {
       return res.json();

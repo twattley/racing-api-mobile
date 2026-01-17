@@ -66,7 +66,7 @@ export default function RaceDetailsScreen({ route, navigation }) {
   // Process the race data
   const raceData = useMemo(() => {
     if (!fullData) return null;
-    
+
     const details = fullData.race_details || {};
     const raceInfoRows = fullData.race_info?.data || [];
     const formRows = fullData.race_form?.data || [];
@@ -89,7 +89,7 @@ export default function RaceDetailsScreen({ route, navigation }) {
     const horse_data = Array.from(grouped.entries()).map(([horse_id, rows]) => {
       rows.sort((a, b) => new Date(a.race_date) - new Date(b.race_date));
       const info = infoByHorseId.get(horse_id) || {};
-      
+
       // Calculate days since last run
       const weeks = rows
         .map((r) => r.total_weeks_since_run)
@@ -171,7 +171,7 @@ export default function RaceDetailsScreen({ route, navigation }) {
   // Initialize visibility
   const resetVisibility = useCallback(() => {
     if (!sortedHorses.length) return;
-    
+
     const outsiders = sortedHorses
       .filter((h) => (h.todays_betfair_win_sp ?? 0) > 20)
       .map((h) => h.horse_id);
@@ -216,7 +216,7 @@ export default function RaceDetailsScreen({ route, navigation }) {
 
   const handleContenderClick = (horse, status) => {
     const newStatus = horse.contender_status === status ? null : status;
-    
+
     if (!newStatus) {
       deleteContenderSelection.mutate({ raceId, horseId: horse.horse_id });
     } else {
@@ -322,7 +322,7 @@ export default function RaceDetailsScreen({ route, navigation }) {
             {isMarketView ? 'Show Form' : 'Market View'}
           </Text>
         </TouchableOpacity>
-        
+
         {contenderCount > 0 && (
           <View style={styles.contenderBadge}>
             <Text style={styles.contenderBadgeText}>

@@ -91,7 +91,7 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>API Configuration</Text>
           <Text style={styles.description}>
-            Enter your Racing API server URL. If using Tailscale, use your Mac mini's 
+            Enter your Racing API server URL. If using Tailscale, use your Mac mini's
             Tailscale IP address (e.g., http://100.x.x.x:3000/racing-api/api/v2)
           </Text>
 

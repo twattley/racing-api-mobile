@@ -31,11 +31,11 @@ export default function FeedbackRacesScreen({ navigation }) {
   const raceData = useMemo(() => {
     const courses = data?.data || [];
     if (!courses.length) return [];
-    
+
     const byDate = new Map();
     for (const course of courses) {
       for (const race of course.races || []) {
-        const dateKey = race.race_date || 
+        const dateKey = race.race_date ||
           (race.race_time ? new Date(race.race_time).toISOString().slice(0, 10) : '');
         if (!dateKey) continue;
         if (!byDate.has(dateKey)) byDate.set(dateKey, new Map());
@@ -44,7 +44,7 @@ export default function FeedbackRacesScreen({ navigation }) {
         courseMap.get(course.course).push(race);
       }
     }
-    
+
     return Array.from(byDate.entries())
       .map(([race_date, courseMap]) => ({
         race_date,
@@ -165,16 +165,16 @@ export default function FeedbackRacesScreen({ navigation }) {
               <Text style={styles.dateTitle}>
                 {new Date(raceDay.race_date).toDateString()}
               </Text>
-              
+
               {raceDay.courses.map((course, courseIndex) => (
                 <View key={courseIndex} style={styles.courseContainer}>
                   <Text style={styles.courseName}>{course.course}</Text>
-                  
+
                   {course.races.map((race) => (
                     <TouchableOpacity
                       key={race.race_id}
                       style={styles.raceItem}
-                      onPress={() => navigation.navigate('FeedbackRaceDetails', { 
+                      onPress={() => navigation.navigate('FeedbackRaceDetails', {
                         raceId: race.race_id,
                         raceTitle: race.race_title,
                       })}

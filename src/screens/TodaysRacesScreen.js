@@ -23,11 +23,11 @@ export default function TodaysRacesScreen({ navigation }) {
   const todaysRaceData = useMemo(() => {
     const courses = data?.data || [];
     if (!courses.length) return [];
-    
+
     const byDate = new Map();
     for (const course of courses) {
       for (const race of course.races || []) {
-        const dateKey = race.race_date || 
+        const dateKey = race.race_date ||
           (race.race_time ? new Date(race.race_time).toISOString().slice(0, 10) : '');
         if (!dateKey) continue;
         if (!byDate.has(dateKey)) byDate.set(dateKey, new Map());
@@ -36,7 +36,7 @@ export default function TodaysRacesScreen({ navigation }) {
         courseMap.get(course.course).push({ ...race, skip_flag: race.skip_flag ?? false });
       }
     }
-    
+
     return Array.from(byDate.entries())
       .map(([race_date, courseMap]) => ({
         race_date,
@@ -98,18 +98,18 @@ export default function TodaysRacesScreen({ navigation }) {
           <Text style={styles.dateHeader}>
             {new Date(raceDay.race_date).toDateString()}
           </Text>
-          
+
           {raceDay.courses.map((course, courseIndex) => (
             <View key={courseIndex} style={styles.courseContainer}>
               <Text style={styles.courseName}>{course.course}</Text>
-              
+
               {course.races.map((race) => {
                 const isSkipped = race.skip_flag === true || race.skip_flag === 1;
                 return (
                   <TouchableOpacity
                     key={race.race_id}
                     style={[styles.raceItem, isSkipped && styles.raceItemSkipped]}
-                    onPress={() => navigation.navigate('RaceDetails', { 
+                    onPress={() => navigation.navigate('RaceDetails', {
                       raceId: race.race_id,
                       raceTitle: race.race_title,
                     })}
@@ -121,7 +121,7 @@ export default function TodaysRacesScreen({ navigation }) {
                       </Text>
                     </View>
                     <View style={styles.raceInfo}>
-                      <Text 
+                      <Text
                         style={[styles.raceTitle, isSkipped && styles.textSkipped]}
                         numberOfLines={1}
                       >

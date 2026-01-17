@@ -9,7 +9,7 @@ let cachedApiBase = null;
 
 export async function getApiBase() {
   if (cachedApiBase) return cachedApiBase;
-  
+
   try {
     const stored = await SecureStore.getItemAsync(API_BASE_KEY);
     cachedApiBase = stored || DEFAULT_API_BASE;

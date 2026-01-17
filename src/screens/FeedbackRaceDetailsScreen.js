@@ -33,7 +33,7 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
   // Process the race data (same as RaceDetailsScreen)
   const raceData = useMemo(() => {
     if (!fullData) return null;
-    
+
     const details = fullData.race_details || {};
     const raceInfoRows = fullData.race_info?.data || [];
     const formRows = fullData.race_form?.data || [];
@@ -54,7 +54,7 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
     const horse_data = Array.from(grouped.entries()).map(([horse_id, rows]) => {
       rows.sort((a, b) => new Date(a.race_date) - new Date(b.race_date));
       const info = infoByHorseId.get(horse_id) || {};
-      
+
       const weeks = rows
         .map((r) => r.total_weeks_since_run)
         .filter((x) => typeof x === 'number' && x >= 0);
@@ -103,7 +103,7 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
   // Merge result data with horse data
   const sortedHorses = useMemo(() => {
     if (!raceData?.horse_data) return [];
-    
+
     const resultMap = new Map();
     if (resultData?.data) {
       for (const r of resultData.data) {
@@ -196,7 +196,7 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
             {showResults ? 'Hide Results' : 'Show Results'}
           </Text>
         </TouchableOpacity>
-        
+
         {resultLoading && (
           <ActivityIndicator size="small" color="#16a34a" style={{ marginLeft: 12 }} />
         )}
@@ -226,7 +226,7 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
               isVisible={visibleHorses[horse.horse_id]}
               isMarketView={false}
               onToggleVisibility={() => toggleHorseVisibility(horse.horse_id)}
-              onContenderClick={() => {}} // No contender actions in feedback
+              onContenderClick={() => { }} // No contender actions in feedback
               raceData={raceData}
             />
           </View>
