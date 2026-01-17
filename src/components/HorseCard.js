@@ -122,6 +122,12 @@ export default function HorseCard({
           >
             <Text style={styles.priceValue}>{horse.todays_betfair_win_sp || '-'}</Text>
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.statBox, styles.priceBox]}
+            onPress={() => handlePriceClick('place', horse.todays_betfair_place_sp)}
+          >
+            <Text style={styles.priceValue}>{horse.todays_betfair_place_sp || '-'}</Text>
+          </TouchableOpacity>
           <View style={[styles.statBox, getValueStyle()]}>
             <Text style={styles.valueText}>{getValueText()}</Text>
           </View>
@@ -130,13 +136,6 @@ export default function HorseCard({
 
       {/* Stats row */}
       <View style={styles.statsContainer}>
-        <TouchableOpacity
-          style={styles.miniStat}
-          onPress={() => handlePriceClick('place', horse.todays_betfair_place_sp)}
-        >
-          <Text style={styles.miniStatLabel}>Place SP</Text>
-          <Text style={[styles.miniStatValue, styles.tappablePrice]}>{horse.todays_betfair_place_sp || '-'}</Text>
-        </TouchableOpacity>
         <View style={styles.miniStat}>
           <Text style={styles.miniStatLabel}>Sim Place</Text>
           <Text style={styles.miniStatValue}>{horse.todays_sim_place_sp || '-'}</Text>
@@ -197,6 +196,9 @@ function FormRow({ perf }) {
         <Text style={styles.formCourse} numberOfLines={1}>
           {perf.course}
         </Text>
+        <Text style={styles.formDistance}>
+          {perf.distance}
+        </Text>
         <Text style={[
           styles.formPosition,
           perf.finishing_position === '1' && styles.positionWin,
@@ -204,8 +206,8 @@ function FormRow({ perf }) {
         ]}>
           {perf.finishing_position || '-'}/{perf.number_of_runners || '-'}
         </Text>
-        <Text style={styles.formDistance}>
-          {perf.distance}
+        <Text style={styles.formBeaten}>
+          ({perf.total_distance_beaten || '0'})
         </Text>
         <Text style={styles.formSP}>
           {perf.betfair_win_sp || '-'}
@@ -413,9 +415,15 @@ const styles = StyleSheet.create({
     color: '#2563eb',
   },
   formDistance: {
-    width: 50,
+    width: 45,
     fontSize: 10,
     color: '#94a3b8',
+    textAlign: 'center',
+  },
+  formBeaten: {
+    width: 35,
+    fontSize: 10,
+    color: '#64748b',
     textAlign: 'center',
   },
   formSP: {

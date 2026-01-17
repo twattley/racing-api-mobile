@@ -113,7 +113,6 @@ export default function TodaysRacesScreen({ navigation }) {
                       raceId: race.race_id,
                       raceTitle: race.race_title,
                     })}
-                    disabled={isSkipped}
                   >
                     <View style={styles.raceTimeContainer}>
                       <Text style={[styles.raceTime, isSkipped && styles.textSkipped]}>
