@@ -196,39 +196,72 @@ function FormRow({ perf }) {
     return null;
   };
 
+  const getSurfaceColor = (surface) => {
+    const normalizedSurface = String(surface || '').trim().toLowerCase();
+    switch (normalizedSurface) {
+      case 'turf': return '#22c55e';
+      case 'polytrack': return '#78350f';
+      case 'tapeta': return '#a16207';
+      case 'fibresand': return '#ca8a04';
+      case 'artificial': return '#eab308';
+      default: return '#64748b';
+    }
+  };
+
+  const getGoingAbbreviation = (going) => {
+    const mapping = {
+      'Fast': 'F',
+      'Firm': 'F',
+      'Good': 'G',
+      'Good To Firm': 'GF',
+      'Good To Soft': 'GS',
+      'Good To Yielding': 'GY',
+      'Heavy': 'H',
+      'Muddy': 'M',
+      'Sloppy': 'S',
+      'Slow': 'S',
+      'Soft': 'S',
+      'Soft To Heavy': 'SH',
+      'Standard': 'ST',
+      'Standard To Fast': 'SF',
+      'Standard To Slow': 'Ss',
+      'Very Soft': 'VS',
+      'Yielding': 'Y',
+      'Yielding To Soft': 'YS',
+    };
+    return mapping[going] || going || '-';
+  };
+
+  const formatSP = (sp) => {
+    if (!sp) return '-';
+    const val = parseFloat(sp);
+    if (val >= 100) return Math.round(val);
+    if (val >= 10) return val.toFixed(1);
+    return sp;
+  };
+
   return (
     <TouchableOpacity onPress={() => setExpanded(!expanded)}>
-      <View style={styles.formRow}>
-        <Text style={styles.formSP}>
-          {perf.betfair_win_sp
-            ? (parseFloat(perf.betfair_win_sp) >= 100
-              ? Math.round(parseFloat(perf.betfair_win_sp))
-              : parseFloat(perf.betfair_win_sp) >= 10
-                ? parseFloat(perf.betfair_win_sp).toFixed(1)
-                : perf.betfair_win_sp)
-            : '-'}
-        </Text>
-        <View style={styles.formClassContainer}>
-          <Text style={styles.formClass}>{perf.race_class ?? '-'}</Text>
+      {/* Line 1: Race Details (matches header) */}
+      <View style={styles.formRowLine1}>
+        <Text style={styles.formCourse} numberOfLines={1}>{perf.course || '-'}</Text>
+        <Text style={styles.colDistance}>{perf.distance || '-'}</Text>
+        <Text style={styles.colGoing}>{getGoingAbbreviation(perf.going)}</Text>
+        <View style={styles.colClassWrap}>
+          <Text style={styles.colClass}>C{perf.race_class ?? '-'}</Text>
           {getClassDiffIndicator() && (
             <Text style={getClassDiffStyle()}>{getClassDiffIndicator()}</Text>
           )}
         </View>
-        <Text style={styles.formDistance}>
-          {perf.distance}
-        </Text>
-        <Text style={styles.formCourse} numberOfLines={1}>
-          {perf.course}
-        </Text>
-        <Text style={[
-          styles.formWeeks,
-          perf.weeks_since_last_ran > 16 && styles.weeksWarning,
-        ]}>
-          {perf.weeks_since_last_ran ?? '-'}
-        </Text>
-        <Text style={styles.formTotalWeeks}>
-          {perf.total_weeks_since_run ?? '-'}
-        </Text>
+        <Text style={styles.colAge}>{perf.age_range || '-'}</Text>
+        <Text style={styles.colHcap}>{perf.hcap_range ? `(${perf.hcap_range})` : ''}</Text>
+        <Text style={styles.colPrize}>£{perf.first_place_prize_money || '-'}K</Text>
+        <View style={[styles.surfaceChip, { backgroundColor: getSurfaceColor(perf.surface) }]} />
+      </View>
+
+      {/* Line 2: Performance Details */}
+      <View style={styles.formRowLine2}>
+        <Text style={styles.formSP}>{formatSP(perf.betfair_win_sp)}</Text>
         <Text style={[
           styles.formPosition,
           perf.finishing_position === '1' && styles.positionWin,
@@ -236,9 +269,17 @@ function FormRow({ perf }) {
         ]}>
           {perf.finishing_position || '-'}/{perf.number_of_runners || '-'}
         </Text>
-        <Text style={styles.formBeaten}>
-          ({perf.total_distance_beaten || '0'})
+        <Text style={styles.formBeaten}>({perf.total_distance_beaten || '0'})</Text>
+        <Text style={[
+          styles.formWeeks,
+          perf.weeks_since_last_ran > 16 && styles.weeksWarning,
+        ]}>
+          {perf.weeks_since_last_ran ?? '-'}w
         </Text>
+        <Text style={styles.formTotalWeeks}>{perf.total_weeks_since_run ?? '-'}w ago</Text>
+        {perf.speed_figure && <Text style={styles.formSpeedFig}>SF:{perf.speed_figure}</Text>}
+        {perf.rating && <Text style={styles.formRating}>R:{perf.rating}</Text>}
+        {perf.official_rating && <Text style={styles.formOR}>OR:{perf.official_rating}</Text>}
       </View>
 
       {/* Comments section */}
@@ -410,62 +451,105 @@ const styles = StyleSheet.create({
     color: '#64748b',
     marginBottom: 6,
   },
-  formRow: {
+  // Line 1: Race Details (matches TodaysRaceDetails exactly)
+  formRowLine1: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#334155',
   },
-  formWeeks: {
+  // Line 2: Performance (SP, position, beaten, weeks, speed, rating, OR)
+  formRowLine2: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 6,
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    backgroundColor: '#f1f5f9',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    marginBottom: 2,
+  },
+  formCourse: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  colDistance: {
+    width: 42,
+    fontSize: 11,
+    color: '#e2e8f0',
+    textAlign: 'center',
+  },
+  colGoing: {
     width: 24,
     fontSize: 11,
-    fontWeight: '500',
-    color: '#475569',
+    color: '#e2e8f0',
     textAlign: 'center',
   },
-  weeksWarning: {
-    color: '#fff',
-    backgroundColor: '#ef4444',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  formTotalWeeks: {
-    width: 28,
-    fontSize: 11,
-    color: '#64748b',
-    textAlign: 'center',
-    marginRight: 6,
-  },
-  formClassContainer: {
+  colClassWrap: {
+    width: 30,
     flexDirection: 'row',
     alignItems: 'center',
-    width: 28,
-    marginRight: 4,
+    justifyContent: 'center',
   },
-  formClass: {
+  colClass: {
     fontSize: 11,
-    fontWeight: '500',
-    color: '#475569',
+    color: '#e2e8f0',
+    textAlign: 'center',
+  },
+  colAge: {
+    width: 32,
+    fontSize: 11,
+    color: '#e2e8f0',
+    textAlign: 'center',
+  },
+  colHcap: {
+    width: 42,
+    fontSize: 11,
+    color: '#e2e8f0',
+    textAlign: 'center',
+  },
+  colPrize: {
+    width: 36,
+    fontSize: 11,
+    color: '#fbbf24',
+    fontWeight: '600',
+    textAlign: 'right',
   },
   classDiffHigher: {
     fontSize: 9,
     color: '#16a34a',
-    marginLeft: 2,
+    marginLeft: 1,
   },
   classDiffLower: {
     fontSize: 9,
     color: '#ef4444',
-    marginLeft: 2,
+    marginLeft: 1,
   },
-  formCourse: {
-    flex: 1,
+  surfaceChip: {
+    width: 14,
+    height: 14,
+    borderRadius: 3,
+    marginLeft: 6,
+  },
+  formSP: {
+    minWidth: 38,
     fontSize: 11,
-    color: '#475569',
-    marginRight: 2,
+    fontWeight: '600',
+    color: '#1e40af',
+    backgroundColor: '#dbeafe',
+    textAlign: 'center',
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   formPosition: {
-    width: 40,
+    minWidth: 35,
     fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',
@@ -477,30 +561,40 @@ const styles = StyleSheet.create({
   positionPlace: {
     color: '#2563eb',
   },
-  formDistance: {
-    width: 45,
-    fontSize: 10,
-    color: '#94a3b8',
-    textAlign: 'center',
-  },
   formBeaten: {
-    width: 35,
-    fontSize: 10,
-    color: '#64748b',
-    textAlign: 'center',
-  },
-  formSP: {
-    width: 40,
     fontSize: 11,
-    fontWeight: '600',
-    color: '#1e40af',
-    backgroundColor: '#dbeafe',
-    textAlign: 'center',
-    paddingVertical: 2,
-    paddingHorizontal: 4,
-    borderRadius: 4,
+    color: '#64748b',
+  },
+  formWeeks: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#475569',
+  },
+  weeksWarning: {
+    color: '#fff',
+    backgroundColor: '#ef4444',
+    borderRadius: 3,
     overflow: 'hidden',
-    marginRight: 10,
+    paddingHorizontal: 2,
+  },
+  formTotalWeeks: {
+    fontSize: 11,
+    color: '#94a3b8',
+  },
+  formSpeedFig: {
+    fontSize: 11,
+    color: '#7c3aed',
+    fontWeight: '500',
+  },
+  formRating: {
+    fontSize: 11,
+    color: '#0891b2',
+    fontWeight: '500',
+  },
+  formOR: {
+    fontSize: 11,
+    color: '#475569',
+    fontWeight: '500',
   },
   commentContainer: {
     paddingHorizontal: 4,

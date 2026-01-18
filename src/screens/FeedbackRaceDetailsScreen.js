@@ -137,15 +137,15 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
         )}
       </View>
 
+      {/* Fixed Race Details Header */}
+      <TodaysRaceDetails data={raceData} />
+
       <ScrollView
         style={styles.scrollView}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }
       >
-        {/* Race Details Header */}
-        <TodaysRaceDetails data={raceData} />
-
         {sortedHorses.map((horse) => (
           <View key={horse.horse_id}>
             {showResults && horse.result_position && (

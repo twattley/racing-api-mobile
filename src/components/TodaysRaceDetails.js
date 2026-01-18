@@ -20,56 +20,44 @@ const getSurfaceColor = (surface) => {
   }
 };
 
+const getGoingAbbreviation = (going) => {
+  const mapping = {
+    'Fast': 'F',
+    'Firm': 'F',
+    'Good': 'G',
+    'Good To Firm': 'GF',
+    'Good To Soft': 'GS',
+    'Good To Yielding': 'GY',
+    'Heavy': 'H',
+    'Muddy': 'M',
+    'Sloppy': 'S',
+    'Slow': 'S',
+    'Soft': 'S',
+    'Soft To Heavy': 'SH',
+    'Standard': 'ST',
+    'Standard To Fast': 'SF',
+    'Standard To Slow': 'Ss',
+    'Very Soft': 'VS',
+    'Yielding': 'Y',
+    'Yielding To Soft': 'YS',
+  };
+  return mapping[going] || going || '-';
+};
+
 export default function TodaysRaceDetails({ data }) {
   if (!data) return null;
 
   return (
     <View style={styles.container}>
-      {/* Row 1: Course, Distance, Going */}
       <View style={styles.row}>
-        <View style={styles.chip}>
-          <Text style={styles.chipText}>{data.course || '-'}</Text>
-        </View>
-        <View style={styles.chip}>
-          <Text style={styles.chipText}>{data.distance || '-'}</Text>
-        </View>
-        <View style={styles.chip}>
-          <Text style={styles.chipText}>{data.going || '-'}</Text>
-        </View>
-      </View>
-
-      {/* Row 2: Class, Hcap Range, Age Range, Race Type */}
-      <View style={styles.row}>
-        <View style={styles.chip}>
-          <Text style={styles.chipLabel}>Class</Text>
-          <Text style={styles.chipValue}>{data.race_class || '-'}</Text>
-        </View>
-        <View style={styles.chip}>
-          <Text style={styles.chipLabel}>Hcap</Text>
-          <Text style={styles.chipValue}>{data.hcap_range || '-'}</Text>
-        </View>
-        <View style={styles.chip}>
-          <Text style={styles.chipLabel}>Age</Text>
-          <Text style={styles.chipValue}>{data.age_range || '-'}</Text>
-        </View>
-        <View style={styles.chip}>
-          <Text style={styles.chipText}>{data.race_type || '-'}</Text>
-        </View>
-      </View>
-
-      {/* Row 3: Prize Money, Surface */}
-      <View style={styles.row}>
-        <View style={styles.chip}>
-          <Text style={styles.chipLabel}>1st Prize</Text>
-          <Text style={styles.chipValue}>
-            {data.first_place_prize_money
-              ? `£${data.first_place_prize_money.toLocaleString()}`
-              : '-'}
-          </Text>
-        </View>
-        <View style={[styles.chip, { backgroundColor: getSurfaceColor(data.surface) }]}>
-          <Text style={[styles.chipText, styles.surfaceText]}>{data.surface || '-'}</Text>
-        </View>
+        <Text style={styles.courseText} numberOfLines={1}>{data.course || '-'}</Text>
+        <Text style={styles.colDistance}>{data.distance || '-'}</Text>
+        <Text style={styles.colGoing}>{getGoingAbbreviation(data.going)}</Text>
+        <Text style={styles.colClass}>C{data.race_class || '-'}</Text>
+        <Text style={styles.colAge}>{data.age_range || '-'}</Text>
+        <Text style={styles.colHcap}>{data.hcap_range ? `(${data.hcap_range})` : ''}</Text>
+        <Text style={styles.colPrize}>£{data.first_place_prize_money || '-'}K</Text>
+        <View style={[styles.surfaceChip, { backgroundColor: getSurfaceColor(data.surface) }]} />
       </View>
     </View>
   );
@@ -77,38 +65,61 @@ export default function TodaysRaceDetails({ data }) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1e293b',
-    padding: 10,
-    gap: 6,
+    backgroundColor: '#334155',
+    paddingHorizontal: 28,
+    paddingVertical: 6,
   },
   row: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
+    alignItems: 'center',
   },
-  chip: {
-    backgroundColor: '#334155',
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 45,
+  courseText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#fff',
+    fontWeight: '700',
   },
-  chipText: {
+  colDistance: {
+    width: 42,
     fontSize: 11,
-    color: '#fff',
-    fontWeight: '500',
+    color: '#e2e8f0',
+    textAlign: 'center',
   },
-  chipLabel: {
-    fontSize: 9,
-    color: '#94a3b8',
-  },
-  chipValue: {
+  colGoing: {
+    width: 24,
     fontSize: 11,
-    color: '#fff',
-    fontWeight: '600',
+    color: '#e2e8f0',
+    textAlign: 'center',
   },
-  surfaceText: {
-    color: '#fff',
+  colClass: {
+    width: 24,
+    fontSize: 11,
+    color: '#e2e8f0',
+    textAlign: 'center',
+  },
+  colAge: {
+    width: 32,
+    fontSize: 11,
+    color: '#e2e8f0',
+    textAlign: 'center',
+  },
+  colHcap: {
+    width: 42,
+    fontSize: 11,
+    color: '#e2e8f0',
+    textAlign: 'center',
+  },
+  colPrize: {
+    width: 36,
+    fontSize: 11,
+    color: '#fbbf24',
     fontWeight: '600',
+    textAlign: 'right',
+  },
+  surfaceChip: {
+    width: 14,
+    height: 14,
+    borderRadius: 3,
+    marginLeft: 6,
   },
 });
