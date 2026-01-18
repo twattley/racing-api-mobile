@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useRaceFormFull, usePostContenderSelection, useDeleteContenderSelection, usePostBettingSelection } from '../api';
 import HorseCard from '../components/HorseCard';
+import TodaysRaceDetails from '../components/TodaysRaceDetails';
 import { useProcessRaceData } from '../hooks/useProcessRaceData';
 
 export default function RaceDetailsScreen({ route, navigation }) {
@@ -247,6 +248,9 @@ export default function RaceDetailsScreen({ route, navigation }) {
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} />
         }
       >
+        {/* Today's Race Details Header */}
+        <TodaysRaceDetails data={raceData} />
+
         {sortedHorses.map((horse) => (
           <HorseCard
             key={horse.horse_id}

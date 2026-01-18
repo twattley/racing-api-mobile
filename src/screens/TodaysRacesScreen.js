@@ -126,7 +126,7 @@ export default function TodaysRacesScreen({ navigation }) {
                       >
                         {race.race_title}
                       </Text>
-                      <Text style={styles.raceDetails}>
+                      <Text style={[styles.raceDetails, isSkipped && styles.textSkipped]}>
                         {race.distance} • {race.number_of_runners} runners • Class {race.race_class}
                       </Text>
                     </View>

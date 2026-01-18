@@ -184,20 +184,50 @@ function FormRow({ perf }) {
   const hasRpComment = perf.rp_comment &&
     perf.rp_comment.toLowerCase() !== 'no comment available';
 
+  const getClassDiffIndicator = () => {
+    if (perf.class_diff === 'higher') return '▲';
+    if (perf.class_diff === 'lower') return '▼';
+    return '';
+  };
+
+  const getClassDiffStyle = () => {
+    if (perf.class_diff === 'higher') return styles.classDiffHigher;
+    if (perf.class_diff === 'lower') return styles.classDiffLower;
+    return null;
+  };
+
   return (
     <TouchableOpacity onPress={() => setExpanded(!expanded)}>
       <View style={styles.formRow}>
-        <Text style={styles.formDate}>
-          {new Date(perf.race_date).toLocaleDateString('en-GB', {
-            day: '2-digit',
-            month: 'short'
-          })}
+        <Text style={styles.formSP}>
+          {perf.betfair_win_sp
+            ? (parseFloat(perf.betfair_win_sp) >= 100
+              ? Math.round(parseFloat(perf.betfair_win_sp))
+              : parseFloat(perf.betfair_win_sp) >= 10
+                ? parseFloat(perf.betfair_win_sp).toFixed(1)
+                : perf.betfair_win_sp)
+            : '-'}
+        </Text>
+        <View style={styles.formClassContainer}>
+          <Text style={styles.formClass}>{perf.race_class ?? '-'}</Text>
+          {getClassDiffIndicator() && (
+            <Text style={getClassDiffStyle()}>{getClassDiffIndicator()}</Text>
+          )}
+        </View>
+        <Text style={styles.formDistance}>
+          {perf.distance}
         </Text>
         <Text style={styles.formCourse} numberOfLines={1}>
           {perf.course}
         </Text>
-        <Text style={styles.formDistance}>
-          {perf.distance}
+        <Text style={[
+          styles.formWeeks,
+          perf.weeks_since_last_ran > 16 && styles.weeksWarning,
+        ]}>
+          {perf.weeks_since_last_ran ?? '-'}
+        </Text>
+        <Text style={styles.formTotalWeeks}>
+          {perf.total_weeks_since_run ?? '-'}
         </Text>
         <Text style={[
           styles.formPosition,
@@ -208,9 +238,6 @@ function FormRow({ perf }) {
         </Text>
         <Text style={styles.formBeaten}>
           ({perf.total_distance_beaten || '0'})
-        </Text>
-        <Text style={styles.formSP}>
-          {perf.betfair_win_sp || '-'}
         </Text>
       </View>
 
@@ -390,16 +417,52 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
-  formDate: {
-    width: 50,
+  formWeeks: {
+    width: 24,
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#475569',
+    textAlign: 'center',
+  },
+  weeksWarning: {
+    color: '#fff',
+    backgroundColor: '#ef4444',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  formTotalWeeks: {
+    width: 28,
     fontSize: 11,
     color: '#64748b',
+    textAlign: 'center',
+    marginRight: 6,
+  },
+  formClassContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 28,
+    marginRight: 4,
+  },
+  formClass: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#475569',
+  },
+  classDiffHigher: {
+    fontSize: 9,
+    color: '#16a34a',
+    marginLeft: 2,
+  },
+  classDiffLower: {
+    fontSize: 9,
+    color: '#ef4444',
+    marginLeft: 2,
   },
   formCourse: {
     flex: 1,
     fontSize: 11,
     color: '#475569',
-    marginRight: 8,
+    marginRight: 2,
   },
   formPosition: {
     width: 40,
@@ -429,8 +492,15 @@ const styles = StyleSheet.create({
   formSP: {
     width: 40,
     fontSize: 11,
-    color: '#64748b',
-    textAlign: 'right',
+    fontWeight: '600',
+    color: '#1e40af',
+    backgroundColor: '#dbeafe',
+    textAlign: 'center',
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    borderRadius: 4,
+    overflow: 'hidden',
+    marginRight: 10,
   },
   commentContainer: {
     paddingHorizontal: 4,

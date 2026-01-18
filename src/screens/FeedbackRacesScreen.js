@@ -1,5 +1,5 @@
 // Feedback Races Screen - Historical races with date picker
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,17 +8,25 @@ import {
   ActivityIndicator,
   StyleSheet,
   RefreshControl,
-  TextInput,
   Modal,
+  Platform,
 } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useFeedbackRaceTimes, useCurrentDate, useSetCurrentDate } from '../api';
 
 export default function FeedbackRacesScreen({ navigation }) {
-  const [dateModalVisible, setDateModalVisible] = useState(false);
-  const [dateInput, setDateInput] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   const { data: currentDateData } = useCurrentDate('feedback');
   const setDateMutation = useSetCurrentDate('feedback');
+
+  // Initialize selectedDate from currentDateData
+  useEffect(() => {
+    if (currentDateData?.date) {
+      setSelectedDate(new Date(currentDateData.date));
+    }
+  }, [currentDateData?.date]);
 
   const {
     data,
@@ -62,15 +70,36 @@ export default function FeedbackRacesScreen({ navigation }) {
     return dateStr.split('T')[1]?.slice(0, 5) || '';
   };
 
-  const handleSetDate = async () => {
-    if (!dateInput) return;
+  const handleSetDate = async (date) => {
     try {
-      await setDateMutation.mutateAsync(dateInput);
-      setDateModalVisible(false);
-      setDateInput('');
+      // Format date as YYYY-MM-DD
+      const isoDate = date.toISOString().slice(0, 10);
+      await setDateMutation.mutateAsync(isoDate);
       refetch();
     } catch (err) {
       console.error('Failed to set date:', err);
+    }
+  };
+
+  const onDateChange = (event, date) => {
+    setShowDatePicker(false);
+    if (date && event.type !== 'dismissed') {
+      setSelectedDate(date);
+      handleSetDate(date);
+    }
+  };
+
+  const formatDisplayDate = (dateStr) => {
+    if (!dateStr) return 'Not set';
+    try {
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch {
+      return dateStr;
     }
   };
 
@@ -99,52 +128,27 @@ export default function FeedbackRacesScreen({ navigation }) {
     <View style={styles.container}>
       {/* Date picker header */}
       <View style={styles.dateHeader}>
-        <Text style={styles.currentDateLabel}>
-          Current Date: {currentDateData?.date || 'Not set'}
-        </Text>
         <TouchableOpacity
-          style={styles.changeDateButton}
-          onPress={() => setDateModalVisible(true)}
+          style={styles.dateButton}
+          onPress={() => setShowDatePicker(true)}
         >
-          <Text style={styles.changeDateButtonText}>Change Date</Text>
+          <Text style={styles.currentDateLabel}>
+            {formatDisplayDate(currentDateData?.date)}
+          </Text>
+          <Text style={styles.changeDateText}>Tap to change</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Date input modal */}
-      <Modal
-        visible={dateModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setDateModalVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Set Feedback Date</Text>
-            <TextInput
-              style={styles.dateInputField}
-              placeholder="YYYY-MM-DD"
-              value={dateInput}
-              onChangeText={setDateInput}
-              keyboardType="default"
-              autoCapitalize="none"
-            />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton]}
-                onPress={() => setDateModalVisible(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={handleSetDate}
-              >
-                <Text style={styles.confirmButtonText}>Set Date</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      {/* Date picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display="default"
+          onChange={onDateChange}
+          maximumDate={new Date()}
+        />
+      )}
 
       {!raceData?.length ? (
         <View style={styles.centered}>
@@ -170,30 +174,33 @@ export default function FeedbackRacesScreen({ navigation }) {
                 <View key={courseIndex} style={styles.courseContainer}>
                   <Text style={styles.courseName}>{course.course}</Text>
 
-                  {course.races.map((race) => (
-                    <TouchableOpacity
-                      key={race.race_id}
-                      style={styles.raceItem}
-                      onPress={() => navigation.navigate('FeedbackRaceDetails', {
-                        raceId: race.race_id,
-                        raceTitle: race.race_title,
-                      })}
-                    >
-                      <View style={styles.raceTimeContainer}>
-                        <Text style={styles.raceTime}>
-                          {extractTime(race.race_time)}
-                        </Text>
-                      </View>
-                      <View style={styles.raceInfo}>
-                        <Text style={styles.raceTitle} numberOfLines={1}>
-                          {race.race_title}
-                        </Text>
-                        <Text style={styles.raceDetails}>
-                          {race.distance} • {race.number_of_runners} runners
-                        </Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
+                  {course.races.map((race) => {
+                    const isSkipped = race.skip_flag === true || race.skip_flag === 1;
+                    return (
+                      <TouchableOpacity
+                        key={race.race_id}
+                        style={[styles.raceItem, isSkipped && styles.raceItemSkipped]}
+                        onPress={() => navigation.navigate('FeedbackRaceDetails', {
+                          raceId: race.race_id,
+                          raceTitle: race.race_title,
+                        })}
+                      >
+                        <View style={styles.raceTimeContainer}>
+                          <Text style={[styles.raceTime, isSkipped && styles.textSkipped]}>
+                            {extractTime(race.race_time)}
+                          </Text>
+                        </View>
+                        <View style={styles.raceInfo}>
+                          <Text style={[styles.raceTitle, isSkipped && styles.textSkipped]} numberOfLines={1}>
+                            {race.race_title}
+                          </Text>
+                          <Text style={[styles.raceDetails, isSkipped && styles.textSkipped]}>
+                            {race.distance} • {race.number_of_runners} runners • Class {race.race_class}
+                          </Text>
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
               ))}
             </View>
@@ -246,34 +253,45 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   dateHeader: {
+    backgroundColor: '#16a34a',
+    padding: 16,
+    alignItems: 'center',
+  },
+  dateButton: {
+    alignItems: 'center',
+  },
+  currentDateLabel: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  changeDateText: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.8)',
+    marginTop: 4,
+  },
+  scrollView: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  datePickerContainer: {
     backgroundColor: '#fff',
-    padding: 12,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: 20,
+  },
+  datePickerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#e2e8f0',
   },
-  currentDateLabel: {
-    fontSize: 14,
-    color: '#475569',
-  },
-  changeDateButton: {
-    backgroundColor: '#16a34a',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  changeDateButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 13,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  datePicker: {
+    height: 200,
   },
   modalContent: {
     backgroundColor: '#fff',
@@ -283,11 +301,9 @@ const styles = StyleSheet.create({
     maxWidth: 400,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '600',
     color: '#1e293b',
-    marginBottom: 16,
-    textAlign: 'center',
   },
   dateInputField: {
     borderWidth: 1,
@@ -311,15 +327,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
   },
   cancelButtonText: {
-    color: '#475569',
+    color: '#2563eb',
     fontWeight: '600',
+    fontSize: 16,
   },
   confirmButton: {
     backgroundColor: '#16a34a',
   },
   confirmButtonText: {
-    color: '#fff',
+    color: '#16a34a',
     fontWeight: '600',
+    fontSize: 16,
   },
   scrollView: {
     flex: 1,
@@ -381,5 +399,13 @@ const styles = StyleSheet.create({
   raceDetails: {
     fontSize: 12,
     color: '#64748b',
+  },
+  raceItemSkipped: {
+    backgroundColor: '#f1f5f9',
+    opacity: 0.6,
+  },
+  textSkipped: {
+    textDecorationLine: 'line-through',
+    color: '#94a3b8',
   },
 });
