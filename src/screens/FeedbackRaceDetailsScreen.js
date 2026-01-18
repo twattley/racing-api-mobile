@@ -40,8 +40,8 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
     if (!raceData?.horse_data) return [];
 
     const resultMap = new Map();
-    if (resultData?.data) {
-      for (const r of resultData.data) {
+    if (resultData?.horse_performance_data) {
+      for (const r of resultData.horse_performance_data) {
         if (r.horse_id) resultMap.set(r.horse_id, r);
       }
     }
@@ -53,6 +53,9 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
           ...horse,
           result_position: result?.finishing_position,
           result_sp: result?.betfair_win_sp,
+          result_distance_beaten: result?.total_distance_beaten,
+          result_tf_comment: result?.tf_comment,
+          result_rp_comment: result?.rp_comment,
         };
       })
       .sort((a, b) => {
@@ -150,23 +153,42 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
           <View key={horse.horse_id}>
             {showResults && horse.result_position && (
               <View style={[
-                styles.resultBanner,
-                horse.result_position === '1' && styles.resultWin,
-                ['2', '3', '4'].includes(horse.result_position) && styles.resultPlace,
+                styles.resultCard,
+                horse.result_position === '1' && styles.resultCardWin,
+                ['2', '3', '4'].includes(horse.result_position) && styles.resultCardPlace,
               ]}>
-                <Text style={styles.resultText}>
-                  Finished {horse.result_position} @ {horse.result_sp || '-'}
-                </Text>
+                <View style={styles.resultHeader}>
+                  <Text style={styles.resultPosition}>{horse.result_position}</Text>
+                  <Text style={styles.resultHorseName}>{horse.horse_name}</Text>
+                  <Text style={styles.resultSP}>{horse.result_sp || '-'}</Text>
+                  {horse.result_position !== '1' && horse.result_distance_beaten && (
+                    <Text style={styles.resultBeaten}>({horse.result_distance_beaten})</Text>
+                  )}
+                </View>
+                {horse.result_tf_comment && (
+                  <View style={styles.resultCommentRow}>
+                    <Text style={styles.resultCommentLabel}>TF: </Text>
+                    <Text style={styles.resultCommentText}>{horse.result_tf_comment}</Text>
+                  </View>
+                )}
+                {horse.result_rp_comment && (
+                  <View style={styles.resultCommentRow}>
+                    <Text style={styles.resultCommentLabel}>RP: </Text>
+                    <Text style={styles.resultCommentText}>{horse.result_rp_comment}</Text>
+                  </View>
+                )}
               </View>
             )}
-            <HorseCard
-              horse={horse}
-              isVisible={visibleHorses[horse.horse_id]}
-              isMarketView={false}
-              onToggleVisibility={() => toggleHorseVisibility(horse.horse_id)}
-              onContenderClick={() => { }} // No contender actions in feedback
-              raceData={raceData}
-            />
+            {!showResults && (
+              <HorseCard
+                horse={horse}
+                isVisible={visibleHorses[horse.horse_id]}
+                isMarketView={false}
+                onToggleVisibility={() => toggleHorseVisibility(horse.horse_id)}
+                onContenderClick={() => { }}
+                raceData={raceData}
+              />
+            )}
           </View>
         ))}
       </ScrollView>
@@ -237,25 +259,74 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
-  resultBanner: {
-    backgroundColor: '#f1f5f9',
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+  resultCard: {
+    backgroundColor: '#fff',
     marginHorizontal: 8,
-    marginTop: 8,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
+    marginVertical: 4,
+    borderRadius: 8,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
-  resultWin: {
-    backgroundColor: '#fef08a',
+  resultCardWin: {
+    backgroundColor: '#fef9c3',
+    borderLeftWidth: 4,
+    borderLeftColor: '#eab308',
   },
-  resultPlace: {
-    backgroundColor: '#bbf7d0',
+  resultCardPlace: {
+    backgroundColor: '#dcfce7',
+    borderLeftWidth: 4,
+    borderLeftColor: '#22c55e',
   },
-  resultText: {
-    fontSize: 13,
+  resultHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  resultPosition: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1e293b',
+    marginRight: 8,
+    minWidth: 24,
+  },
+  resultHorseName: {
+    flex: 1,
+    fontSize: 15,
     fontWeight: '600',
     color: '#1e293b',
-    textAlign: 'center',
+  },
+  resultSP: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1e40af',
+    backgroundColor: '#dbeafe',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  resultBeaten: {
+    fontSize: 13,
+    color: '#64748b',
+  },
+  resultCommentRow: {
+    flexDirection: 'row',
+    marginTop: 6,
+  },
+  resultCommentLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+    width: 28,
+  },
+  resultCommentText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#475569',
+    lineHeight: 18,
   },
 });

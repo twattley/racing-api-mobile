@@ -8,6 +8,77 @@ import {
 } from 'react-native';
 import SelectionPrompt from './SelectionPrompt';
 
+// Equipment/headgear abbreviation mapping
+const getHeadgearAbbrev = (headgear) => {
+  if (!headgear) return null;
+  const mapping = {
+    'blinkers': 'b',
+    'blinkers (first time)': 'b1',
+    'blinkers (first time), eye shield': 'b1es',
+    'blinkers (first time), hood': 'b1h',
+    'blinkers (first time), hood, eye shield': 'b1hes',
+    'blinkers (first time), tongue tie': 'b1t',
+    'blinkers (first time), tongue tie, eye shield': 'b1tes',
+    'blinkers (first time), tongue tie, hood': 'b1th',
+    'blinkers (first time), tongue tie, hood, eye shield': 'b1thes',
+    'blinkers, cheekpieces': 'bc',
+    'blinkers, eye shield': 'bes',
+    'blinkers, hood': 'bh',
+    'blinkers, hood, eye shield': 'bhes',
+    'blinkers, tongue tie': 'bt',
+    'blinkers, tongue tie, cheekpieces': 'btc',
+    'blinkers, tongue tie, eye shield': 'btes',
+    'blinkers, tongue tie, hood': 'bth',
+    'blinkers, tongue tie, hood, eye shield': 'bthes',
+    'cheekpieces': 'c',
+    'cheekpieces (first time)': 'c1',
+    'cheekpieces (first time), blinkers': 'c1b',
+    'cheekpieces (first time), eye shield': 'c1es',
+    'cheekpieces (first time), hood': 'c1h',
+    'cheekpieces (first time), hood, eye shield': 'c1hes',
+    'cheekpieces (first time), tongue tie': 'c1t',
+    'cheekpieces (first time), tongue tie, eye shield': 'c1tes',
+    'cheekpieces (first time), tongue tie, hood': 'c1th',
+    'cheekpieces (first time), tongue tie, hood, eye shield': 'c1thes',
+    'cheekpieces (first time), visor': 'c1v',
+    'cheekpieces, eye shield': 'ces',
+    'cheekpieces, hood': 'ch',
+    'cheekpieces, hood, eye shield': 'ches',
+    'cheekpieces, visor': 'cv',
+    'eye shield': 'es',
+    'eye shield (first time)': 'es1',
+    'eye shield (first time), hood': 'es1h',
+    'hood': 'h',
+    'hood (first time)': 'h1',
+    'hood, eye shield': 'hes',
+    'tongue tie': 't',
+    'tongue tie (first time)': 't1',
+    'tongue tie (first time), eye shield': 't1es',
+    'tongue tie (first time), hood': 't1h',
+    'tongue tie (first time), hood, eye shield': 't1hes',
+    'tongue tie, cheekpieces': 'tc',
+    'tongue tie, cheekpieces, hood': 'tch',
+    'tongue tie, cheekpieces, hood, eye shield': 'tches',
+    'tongue tie, cheekpieces, visor': 'tcv',
+    'tongue tie, eye shield': 'tes',
+    'tongue tie, hood': 'th',
+    'tongue tie, hood, eye shield': 'thes',
+    'tongue tie, visor': 'tv',
+    'tongue tie, visor, hood': 'tvh',
+    'visor': 'v',
+    'visor (first time)': 'v1',
+    'visor (first time), eye shield': 'v1es',
+    'visor (first time), hood': 'v1h',
+    'visor (first time), tongue tie': 'v1t',
+    'visor (first time), tongue tie, hood': 'v1th',
+    'visor, eye shield': 'ves',
+    'visor, hood': 'vh',
+    'visor, hood, eye shield': 'vhes',
+  };
+  const normalized = headgear.toLowerCase().trim();
+  return mapping[normalized] || headgear;
+};
+
 export default function HorseCard({
   horse,
   isVisible,
@@ -103,7 +174,7 @@ export default function HorseCard({
               styles.headgear,
               horse.todays_headgear.toLowerCase().includes('first time') && styles.headgearFirst
             ]}>
-              ({horse.todays_headgear})
+              ({getHeadgearAbbrev(horse.todays_headgear)})
             </Text>
           )}
         </TouchableOpacity>
@@ -136,10 +207,6 @@ export default function HorseCard({
 
       {/* Stats row */}
       <View style={styles.statsContainer}>
-        <View style={styles.miniStat}>
-          <Text style={styles.miniStatLabel}>Sim Place</Text>
-          <Text style={styles.miniStatValue}>{horse.todays_sim_place_sp || '-'}</Text>
-        </View>
         <View style={styles.miniStat}>
           <Text style={styles.miniStatLabel}>Win %</Text>
           <Text style={styles.miniStatValue}>{horse.todays_win_percentage || '-'}</Text>
@@ -240,6 +307,14 @@ function FormRow({ perf }) {
     return sp;
   };
 
+  const formatBeaten = (beaten) => {
+    if (!beaten) return '0';
+    const val = parseFloat(beaten);
+    if (isNaN(val)) return beaten;
+    if (val >= 10) return val.toFixed(1);
+    return beaten;
+  };
+
   return (
     <TouchableOpacity onPress={() => setExpanded(!expanded)}>
       {/* Line 1: Race Details (matches header) */}
@@ -259,27 +334,41 @@ function FormRow({ perf }) {
         <View style={[styles.surfaceChip, { backgroundColor: getSurfaceColor(perf.surface) }]} />
       </View>
 
-      {/* Line 2: Performance Details */}
+      {/* Line 2: Performance Details (grid layout) */}
       <View style={styles.formRowLine2}>
-        <Text style={styles.formSP}>{formatSP(perf.betfair_win_sp)}</Text>
+        {/* Left side: position, beaten, headgear, SP, weeks */}
         <Text style={[
-          styles.formPosition,
+          styles.colPosition,
           perf.finishing_position === '1' && styles.positionWin,
           ['2', '3', '4'].includes(perf.finishing_position) && styles.positionPlace,
         ]}>
           {perf.finishing_position || '-'}/{perf.number_of_runners || '-'}
         </Text>
-        <Text style={styles.formBeaten}>({perf.total_distance_beaten || '0'})</Text>
+        <Text style={styles.colBeaten}>({formatBeaten(perf.total_distance_beaten)})</Text>
+        {perf.headgear && (
+          <Text style={[
+            styles.colHeadgear,
+            perf.headgear.toLowerCase().includes('first time') && styles.headgearFirstForm
+          ]}>
+            ({getHeadgearAbbrev(perf.headgear)})
+          </Text>
+        )}
+        <Text style={styles.colSP}>{formatSP(perf.betfair_win_sp)}</Text>
         <Text style={[
-          styles.formWeeks,
+          styles.colWeeks,
           perf.weeks_since_last_ran > 16 && styles.weeksWarning,
         ]}>
           {perf.weeks_since_last_ran ?? '-'}w
         </Text>
-        <Text style={styles.formTotalWeeks}>{perf.total_weeks_since_run ?? '-'}w ago</Text>
-        {perf.speed_figure && <Text style={styles.formSpeedFig}>SF:{perf.speed_figure}</Text>}
-        {perf.rating && <Text style={styles.formRating}>R:{perf.rating}</Text>}
-        {perf.official_rating && <Text style={styles.formOR}>OR:{perf.official_rating}</Text>}
+        <Text style={styles.colTotalWeeks}>{perf.total_weeks_since_run ?? '-'}w</Text>
+
+        {/* Spacer to push right side */}
+        <View style={styles.flexSpacer} />
+
+        {/* Right side: OR, SF, Rating */}
+        <Text style={styles.colOR}>{perf.official_rating || '-'}</Text>
+        <Text style={styles.colSF}>{perf.speed_figure || '-'}</Text>
+        <Text style={styles.colRating}>{perf.rating || '-'}</Text>
       </View>
 
       {/* Comments section */}
@@ -459,12 +548,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     backgroundColor: '#334155',
   },
-  // Line 2: Performance (SP, position, beaten, weeks, speed, rating, OR)
+  // Line 2: Performance (grid layout)
   formRowLine2: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 6,
     paddingVertical: 4,
     paddingHorizontal: 12,
     backgroundColor: '#f1f5f9',
@@ -536,24 +623,13 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     marginLeft: 6,
   },
-  formSP: {
-    minWidth: 38,
+  // Line 2 grid columns
+  colPosition: {
+    width: 38,
     fontSize: 11,
     fontWeight: '600',
-    color: '#1e40af',
-    backgroundColor: '#dbeafe',
-    textAlign: 'center',
-    paddingVertical: 2,
-    paddingHorizontal: 4,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  formPosition: {
-    minWidth: 35,
-    fontSize: 11,
-    fontWeight: '600',
-    textAlign: 'center',
     color: '#475569',
+    textAlign: 'center',
   },
   positionWin: {
     color: '#16a34a',
@@ -561,40 +637,75 @@ const styles = StyleSheet.create({
   positionPlace: {
     color: '#2563eb',
   },
-  formBeaten: {
+  colBeaten: {
+    width: 44,
     fontSize: 11,
     color: '#64748b',
+    textAlign: 'center',
   },
-  formWeeks: {
+  colHeadgear: {
+    fontSize: 10,
+    color: '#64748b',
+    fontWeight: '500',
+    marginRight: 8,
+  },
+  headgearFirstForm: {
+    color: '#dc2626',
+    fontWeight: '600',
+  },
+  colSP: {
+    width: 45,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#1e40af',
+    backgroundColor: '#dbeafe',
+    textAlign: 'center',
+    paddingVertical: 2,
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  colWeeks: {
+    width: 28,
     fontSize: 11,
     fontWeight: '500',
     color: '#475569',
+    textAlign: 'center',
   },
   weeksWarning: {
     color: '#fff',
     backgroundColor: '#ef4444',
     borderRadius: 3,
     overflow: 'hidden',
-    paddingHorizontal: 2,
   },
-  formTotalWeeks: {
+  colTotalWeeks: {
+    width: 28,
     fontSize: 11,
     color: '#94a3b8',
+    textAlign: 'center',
   },
-  formSpeedFig: {
-    fontSize: 11,
-    color: '#7c3aed',
-    fontWeight: '500',
+  flexSpacer: {
+    flex: 1,
   },
-  formRating: {
-    fontSize: 11,
-    color: '#0891b2',
-    fontWeight: '500',
-  },
-  formOR: {
+  colOR: {
+    width: 28,
     fontSize: 11,
     color: '#475569',
     fontWeight: '500',
+    textAlign: 'right',
+  },
+  colSF: {
+    width: 28,
+    fontSize: 11,
+    color: '#7c3aed',
+    fontWeight: '500',
+    textAlign: 'right',
+  },
+  colRating: {
+    width: 28,
+    fontSize: 11,
+    color: '#0891b2',
+    fontWeight: '500',
+    textAlign: 'right',
   },
   commentContainer: {
     paddingHorizontal: 4,

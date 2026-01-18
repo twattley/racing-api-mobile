@@ -93,10 +93,10 @@ export default function App() {
                 let iconName;
                 if (route.name === 'Today') {
                   iconName = focused ? 'today' : 'today-outline';
-                } else if (route.name === 'Betting') {
-                  iconName = focused ? 'cash' : 'cash-outline';
                 } else if (route.name === 'Feedback') {
                   iconName = focused ? 'analytics' : 'analytics-outline';
+                } else if (route.name === 'Betting') {
+                  iconName = focused ? 'cash' : 'cash-outline';
                 } else if (route.name === 'Settings') {
                   iconName = focused ? 'settings' : 'settings-outline';
                 }
@@ -108,8 +108,8 @@ export default function App() {
             })}
           >
             <Tab.Screen name="Today" component={TodayStackScreen} />
-            <Tab.Screen name="Betting" component={BettingStackScreen} />
             <Tab.Screen name="Feedback" component={FeedbackStackScreen} />
+            <Tab.Screen name="Betting" component={BettingStackScreen} />
             <Tab.Screen name="Settings" component={SettingsScreen} />
           </Tab.Navigator>
         </NavigationContainer>
