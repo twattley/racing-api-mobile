@@ -121,6 +121,8 @@ export function useLiveBettingSelections(options = {}) {
   return useApiQuery({
     queryKey: ['betting', 'live_selections'],
     url: '/betting/live_selections',
+    staleTime: 10000, // 10 seconds - betting data should be fresh
+    refetchOnMount: 'always',
     ...options,
   });
 }

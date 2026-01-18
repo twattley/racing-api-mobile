@@ -10,6 +10,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useRaceFormFull, usePostContenderSelection, useDeleteContenderSelection, usePostBettingSelection } from '../api';
 import HorseCard from '../components/HorseCard';
 import TodaysRaceDetails from '../components/TodaysRaceDetails';
@@ -106,16 +107,34 @@ export default function RaceDetailsScreen({ route, navigation }) {
     resetVisibility();
   }, [resetVisibility]);
 
-  // Set navigation title
+  // Navigate to graphs screen
+  const navigateToGraphs = useCallback(() => {
+    navigation.navigate('RaceGraphs', {
+      raceData,
+      visibleHorses,
+    });
+  }, [navigation, raceData, visibleHorses]);
+
+  // Set navigation title and header button
   useEffect(() => {
     if (raceData?.race_time) {
       const time = new Date(raceData.race_time).toLocaleTimeString([], {
         hour: '2-digit',
         minute: '2-digit',
       });
-      navigation.setOptions({ title: `${time} - ${raceData.course || ''}` });
+      navigation.setOptions({
+        title: `${time} - ${raceData.course || ''}`,
+        headerRight: () => (
+          <TouchableOpacity
+            onPress={navigateToGraphs}
+            style={{ marginRight: 12, padding: 4 }}
+          >
+            <Ionicons name="stats-chart" size={24} color="#2563eb" />
+          </TouchableOpacity>
+        ),
+      });
     }
-  }, [raceData, navigation]);
+  }, [raceData, navigation, navigateToGraphs]);
 
   const toggleHorseVisibility = (horseId) => {
     setVisibleHorses((prev) => ({

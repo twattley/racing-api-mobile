@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 // Screens
 import TodaysRacesScreen from './src/screens/TodaysRacesScreen';
 import RaceDetailsScreen from './src/screens/RaceDetailsScreen';
+import RaceGraphsScreen from './src/screens/RaceGraphsScreen';
 import LiveBettingScreen from './src/screens/LiveBettingScreen';
 import BettingResultsScreen from './src/screens/BettingResultsScreen';
 import FeedbackRacesScreen from './src/screens/FeedbackRacesScreen';
@@ -43,6 +44,14 @@ function TodayStackScreen() {
         name="RaceDetails"
         component={RaceDetailsScreen}
         options={{ title: 'Race Details' }}
+      />
+      <TodayStack.Screen
+        name="RaceGraphs"
+        component={RaceGraphsScreen}
+        options={{
+          title: 'Graphs',
+          animation: 'slide_from_right',
+        }}
       />
     </TodayStack.Navigator>
   );
@@ -77,6 +86,14 @@ function FeedbackStackScreen() {
         name="FeedbackRaceDetails"
         component={FeedbackRaceDetailsScreen}
         options={{ title: 'Race Review' }}
+      />
+      <FeedbackStack.Screen
+        name="FeedbackRaceGraphs"
+        component={RaceGraphsScreen}
+        options={{
+          title: 'Graphs',
+          animation: 'slide_from_right',
+        }}
       />
     </FeedbackStack.Navigator>
   );
