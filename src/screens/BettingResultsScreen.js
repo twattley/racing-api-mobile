@@ -10,6 +10,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { useBettingResultsAnalysis } from '../api';
+import BettingResultsGraph from '../components/graphs/BettingResultsGraph';
 
 export default function BettingResultsScreen({ navigation }) {
   const {
@@ -79,6 +80,9 @@ export default function BettingResultsScreen({ navigation }) {
       }
     >
       <Text style={styles.title}>Betting Performance</Text>
+
+      {/* Performance Graph */}
+      <BettingResultsGraph results={results} />
 
       {/* Summary Cards */}
       <View style={styles.summaryGrid}>
@@ -158,12 +162,6 @@ export default function BettingResultsScreen({ navigation }) {
           </View>
         </View>
       ))}
-
-      <View style={styles.noteContainer}>
-        <Text style={styles.noteText}>
-          📊 Graphs are available in the web version
-        </Text>
-      </View>
     </ScrollView>
   );
 }
@@ -310,15 +308,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#1e293b',
-  },
-  noteContainer: {
-    padding: 16,
-    marginTop: 16,
-    marginBottom: 32,
-    alignItems: 'center',
-  },
-  noteText: {
-    color: '#64748b',
-    fontStyle: 'italic',
   },
 });

@@ -8,9 +8,10 @@ import {
   ActivityIndicator,
   StyleSheet,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRaceFormFull, useRaceResult } from '../api';
+import { useRaceFormFull, useRaceResult, usePostBettingSelection } from '../api';
 import HorseCard from '../components/HorseCard';
 import TodaysRaceDetails from '../components/TodaysRaceDetails';
 import { useProcessRaceData } from '../hooks/useProcessRaceData';
@@ -32,6 +33,16 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
     data: resultData,
     isLoading: resultLoading,
   } = useRaceResult('feedback', raceId);
+
+  // Mutation for posting betting selections
+  const postSelection = usePostBettingSelection('betting', {
+    onSuccess: () => {
+      Alert.alert('Selection Saved', 'Your betting selection has been recorded.');
+    },
+    onError: (err) => {
+      Alert.alert('Error', err.message || 'Failed to save selection');
+    },
+  });
 
   // Process the race data using shared hook
   const raceData = useProcessRaceData(fullData);
@@ -120,6 +131,44 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
     }));
   };
 
+  // Handle betting selection from price click
+  const handlePriceClick = useCallback(({ horse, market, backLay, price, points }) => {
+    if (!raceData) return;
+
+    // Build market_state from all horses in the race
+    const marketState = sortedHorses
+      .filter((h) => h.horse_id)
+      .map((h) => ({
+        horse_id: h.horse_id,
+        betfair_win_sp: h.todays_betfair_win_sp ?? h.result_sp ?? null,
+        selection_id: h.todays_selection_id ?? null,
+      }));
+
+    const payload = {
+      horse_id: horse.horse_id,
+      horse_name: horse.horse_name,
+      selection_id: horse.todays_selection_id ?? null,
+      market_id_win: horse.todays_market_id_win ?? 'feedback',
+      market_id_place: horse.todays_market_id_place ?? 'feedback',
+      race_id: raceData.race_id,
+      race_date: typeof raceData.race_date === 'string' 
+        ? raceData.race_date.split('T')[0] 
+        : raceData.race_date,
+      race_time: raceData.race_time,
+      number_of_runners: sortedHorses.length,
+      stake_points: points,
+      bet_type: { back_lay: backLay, market: market },
+      market_state: marketState,
+      clicked: {
+        type: market,
+        price: price,
+      },
+      ts: new Date().toISOString(),
+    };
+
+    postSelection.mutate(payload);
+  }, [raceData, sortedHorses, postSelection]);
+
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -205,6 +254,7 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
                 isMarketView={false}
                 onToggleVisibility={() => toggleHorseVisibility(horse.horse_id)}
                 onContenderClick={() => { }}
+                onPriceClick={handlePriceClick}
                 raceData={raceData}
               />
             )}
