@@ -20,6 +20,7 @@ export default function RaceDetailsScreen({ route, navigation }) {
   const { raceId, raceTitle } = route.params;
   const [visibleHorses, setVisibleHorses] = useState({});
   const [isMarketView, setIsMarketView] = useState(false);
+  const [contenderStatuses, setContenderStatuses] = useState({});
 
   const {
     data: fullData,
@@ -78,6 +79,19 @@ export default function RaceDetailsScreen({ route, navigation }) {
       return priceA - priceB;
     });
   }, [raceData]);
+
+  // Initialize contender statuses from API data
+  useEffect(() => {
+    if (sortedHorses.length > 0) {
+      const initialStatuses = {};
+      sortedHorses.forEach((horse) => {
+        if (horse.contender_status) {
+          initialStatuses[horse.horse_id] = horse.contender_status;
+        }
+      });
+      setContenderStatuses(initialStatuses);
+    }
+  }, [sortedHorses]);
 
   // Initialize visibility
   const resetVisibility = useCallback(() => {
@@ -144,7 +158,17 @@ export default function RaceDetailsScreen({ route, navigation }) {
   };
 
   const handleContenderClick = (horse, status) => {
-    const newStatus = horse.contender_status === status ? null : status;
+    const currentStatus = contenderStatuses[horse.horse_id] || null;
+    const newStatus = currentStatus === status ? null : status;
+
+    // Optimistic update - update local state immediately
+    setContenderStatuses((prev) => {
+      if (!newStatus) {
+        const { [horse.horse_id]: _, ...rest } = prev;
+        return rest;
+      }
+      return { ...prev, [horse.horse_id]: newStatus };
+    });
 
     if (!newStatus) {
       deleteContenderSelection.mutate({ raceId, horseId: horse.horse_id });
@@ -155,7 +179,8 @@ export default function RaceDetailsScreen({ route, navigation }) {
         race_id: raceId,
         race_date: raceData?.race_date,
         race_time: raceData?.race_time,
-        status: newStatus,
+        selection_id: horse.todays_selection_id,
+        contender: newStatus === 'contender',
         timestamp: new Date().toISOString(),
       });
     }
@@ -216,7 +241,7 @@ export default function RaceDetailsScreen({ route, navigation }) {
     });
   };
 
-  const contenderCount = sortedHorses.filter(h => h.contender_status === 'contender').length;
+  const contenderCount = Object.values(contenderStatuses).filter(s => s === 'contender').length;
 
   if (isLoading) {
     return (
@@ -273,7 +298,7 @@ export default function RaceDetailsScreen({ route, navigation }) {
         {sortedHorses.map((horse) => (
           <HorseCard
             key={horse.horse_id}
-            horse={horse}
+            horse={{ ...horse, contender_status: contenderStatuses[horse.horse_id] || null }}
             isVisible={visibleHorses[horse.horse_id]}
             isMarketView={isMarketView}
             onToggleVisibility={() => toggleHorseVisibility(horse.horse_id)}

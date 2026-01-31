@@ -147,6 +147,17 @@ export function useVoidBettingSelection(options = {}) {
   });
 }
 
+// Amend betting selection price
+export function useAmendBettingSelectionPrice(options = {}) {
+  return useApiMutation({
+    mutationKey: ['betting', 'live_selections', 'amend_price'],
+    url: '/betting/live_selections/amend_price',
+    method: 'POST',
+    invalidate: [['betting', 'live_selections']],
+    ...options,
+  });
+}
+
 // Feedback race times (historical)
 export function useFeedbackRaceTimes(base = 'feedback', options = {}) {
   const url = buildPath(base, '/todays-race-times');

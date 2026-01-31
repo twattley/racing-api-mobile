@@ -1,5 +1,5 @@
 // Live Betting Screen - Shows current betting selections
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,14 @@ import {
   StyleSheet,
   RefreshControl,
   Alert,
+  TextInput,
 } from 'react-native';
-import { useLiveBettingSelections, useVoidBettingSelection } from '../api';
+import { useLiveBettingSelections, useVoidBettingSelection, useAmendBettingSelectionPrice } from '../api';
 
 export default function LiveBettingScreen({ navigation }) {
+  const [editingPriceId, setEditingPriceId] = useState(null);
+  const [editedPrice, setEditedPrice] = useState('');
+
   const {
     data,
     error,
@@ -22,6 +26,45 @@ export default function LiveBettingScreen({ navigation }) {
   } = useLiveBettingSelections();
 
   const voidMutation = useVoidBettingSelection();
+  const amendMutation = useAmendBettingSelectionPrice();
+
+  const handleEditPrice = (selection) => {
+    setEditingPriceId(selection.unique_id);
+    setEditedPrice(selection.requested_odds?.toString() || '');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingPriceId(null);
+    setEditedPrice('');
+  };
+
+  const handleSavePrice = async (selection) => {
+    const newPrice = parseFloat(editedPrice);
+    if (isNaN(newPrice) || newPrice <= 1) {
+      Alert.alert('Invalid Price', 'Please enter a valid price greater than 1.00');
+      return;
+    }
+
+    try {
+      await amendMutation.mutateAsync({
+        unique_id: selection.unique_id,
+        market_id: selection.market_id,
+        selection_id: selection.selection_id,
+        horse_name: selection.horse_name,
+        market_type: selection.market_type,
+        selection_type: selection.selection_type,
+        race_time: selection.race_time,
+        new_requested_odds: newPrice,
+        size_matched: selection.size_matched || 0,
+        price_matched: selection.price_matched,
+      });
+      setEditingPriceId(null);
+      setEditedPrice('');
+      Alert.alert('Success', `Price amended to ${newPrice} for ${selection.horse_name}`);
+    } catch (err) {
+      Alert.alert('Error', err.message || 'Failed to amend price');
+    }
+  };
 
   const handleVoidSelection = (selection) => {
     Alert.alert(
@@ -77,6 +120,18 @@ export default function LiveBettingScreen({ navigation }) {
 
   const getSelectionTypeStyle = (type) => {
     return type === 'LAY' ? styles.typeLay : styles.typeBack;
+  };
+
+  const getStatusStyle = (selection) => {
+    if (selection.is_pending) return styles.statusPending;
+    if (selection.fully_matched) return styles.statusMatched;
+    return styles.statusPartial;
+  };
+
+  const getStatusText = (selection) => {
+    if (selection.is_pending) return '📋 Pending';
+    if (selection.fully_matched) return '✓ Matched';
+    return '⏳ Partial';
   };
 
   if (isLoading) {
@@ -153,12 +208,58 @@ export default function LiveBettingScreen({ navigation }) {
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Requested:</Text>
-          <Text style={styles.detailValue}>{formatOdds(selection.requested_odds)}</Text>
+          {showVoid && editingPriceId === selection.unique_id ? (
+            <View style={styles.editPriceContainer}>
+              <TextInput
+                style={styles.priceInput}
+                value={editedPrice}
+                onChangeText={setEditedPrice}
+                keyboardType="decimal-pad"
+                autoFocus
+              />
+              <TouchableOpacity
+                style={styles.saveButton}
+                onPress={() => handleSavePrice(selection)}
+                disabled={amendMutation.isPending}
+              >
+                <Text style={styles.saveButtonText}>
+                  {amendMutation.isPending ? '...' : '✓'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleCancelEdit}
+              >
+                <Text style={styles.cancelButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              onPress={() => showVoid && handleEditPrice(selection)}
+              disabled={!showVoid}
+            >
+              <Text style={[styles.detailValue, showVoid && styles.editableValue]}>
+                {formatOdds(selection.requested_odds)}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
         <View style={styles.detailRow}>
           <Text style={styles.detailLabel}>Matched:</Text>
-          <Text style={styles.detailValue}>
-            {formatOdds(selection.price_matched)} @ {formatCurrency(selection.size_matched)}
+          {selection.is_pending ? (
+            <Text style={[styles.detailValue, styles.pendingValue]}>
+              {formatCurrency(selection.size_matched)}/{formatCurrency(selection.requested_size)}
+            </Text>
+          ) : (
+            <Text style={styles.detailValue}>
+              {formatOdds(selection.price_matched)} @ {formatCurrency(selection.size_matched)}
+            </Text>
+          )}
+        </View>
+        <View style={styles.detailRow}>
+          <Text style={styles.detailLabel}>Status:</Text>
+          <Text style={[styles.detailValue, getStatusStyle(selection)]}>
+            {getStatusText(selection)}
           </Text>
         </View>
       </View>
@@ -364,6 +465,60 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     fontWeight: '500',
     fontSize: 13,
+  },
+  pendingValue: {
+    color: '#ea580c',
+    fontWeight: '600',
+  },
+  statusPending: {
+    color: '#ea580c',
+  },
+  statusMatched: {
+    color: '#16a34a',
+  },
+  statusPartial: {
+    color: '#ca8a04',
+  },
+  editableValue: {
+    color: '#2563eb',
+    textDecorationLine: 'underline',
+  },
+  editPriceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  priceInput: {
+    width: 70,
+    height: 28,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    fontSize: 13,
+    backgroundColor: '#fff',
+  },
+  saveButton: {
+    backgroundColor: '#16a34a',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  saveButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 12,
+  },
+  cancelButton: {
+    backgroundColor: '#9ca3af',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+  },
+  cancelButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 12,
   },
   voidButton: {
     backgroundColor: '#ef4444',
