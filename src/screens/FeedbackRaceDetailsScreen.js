@@ -20,6 +20,7 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
   const { raceId, raceTitle } = route.params;
   const [visibleHorses, setVisibleHorses] = useState({});
   const [showResults, setShowResults] = useState(false);
+  const [isMarketView, setIsMarketView] = useState(false);
 
   const {
     data: fullData,
@@ -194,6 +195,17 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
     <View style={styles.container}>
       {/* Header controls */}
       <View style={styles.header}>
+        {!showResults && (
+          <TouchableOpacity
+            style={[styles.toggleButton, isMarketView && styles.toggleActiveMarket, { marginRight: 8 }]}
+            onPress={() => setIsMarketView(!isMarketView)}
+          >
+            <Text style={[styles.toggleButtonText, isMarketView && styles.toggleTextActive]}>
+              {isMarketView ? 'Show Form' : 'Market View'}
+            </Text>
+          </TouchableOpacity>
+        )}
+
         <TouchableOpacity
           style={[styles.toggleButton, showResults && styles.toggleActive]}
           onPress={() => setShowResults(!showResults)}
@@ -251,7 +263,7 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
               <HorseCard
                 horse={horse}
                 isVisible={visibleHorses[horse.horse_id]}
-                isMarketView={false}
+                isMarketView={isMarketView}
                 onToggleVisibility={() => toggleHorseVisibility(horse.horse_id)}
                 onContenderClick={() => { }}
                 onPriceClick={handlePriceClick}
@@ -317,6 +329,9 @@ const styles = StyleSheet.create({
   },
   toggleActive: {
     backgroundColor: '#16a34a',
+  },
+  toggleActiveMarket: {
+    backgroundColor: '#2563eb',
   },
   toggleButtonText: {
     fontWeight: '600',
