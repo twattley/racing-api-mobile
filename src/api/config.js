@@ -3,7 +3,7 @@
 import * as SecureStore from 'expo-secure-store';
 
 const API_BASE_KEY = 'racing_api_base_url';
-const DEFAULT_API_BASE = 'http://localhost:3000/racing-api/api/v2';
+const DEFAULT_API_BASE = 'http://server:8010/racing-api/api/v2';  // Backend port from ~/.ports.yaml
 
 let cachedApiBase = null;
 
