@@ -84,7 +84,6 @@ export default function HorseCard({
   isVisible,
   isMarketView,
   onToggleVisibility,
-  onContenderClick,
   onPriceClick,
   raceData,
 }) {
@@ -110,57 +109,10 @@ export default function HorseCard({
     setPromptState((s) => ({ ...s, visible: false }));
   };
 
-  const getValueStyle = () => {
-    if (horse.value_percentage != null) {
-      return parseFloat(horse.value_percentage) > 0
-        ? styles.valuePositive
-        : styles.valueNegative;
-    }
-    if (horse.is_value_lay === true) {
-      return styles.valueLay;
-    }
-    return styles.valueNeutral;
-  };
-
-  const getValueText = () => {
-    if (horse.value_percentage != null) {
-      return `${horse.value_percentage}%`;
-    }
-    if (horse.is_value_lay === true) {
-      return `L ${horse.lay_value_percentage}%`;
-    }
-    if (horse.is_value_lay === false) {
-      return 'NO LAY';
-    }
-    return '-';
-  };
-
   return (
     <View style={styles.card}>
       {/* Horse Header */}
       <View style={styles.header}>
-        {/* Contender buttons */}
-        <TouchableOpacity
-          style={[
-            styles.contenderButton,
-            horse.contender_status === 'contender' && styles.contenderActive,
-          ]}
-          onPress={() => onContenderClick('contender')}
-        >
-          <Text style={styles.contenderButtonText}>C</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.contenderButton,
-            styles.notContenderButton,
-            horse.contender_status === 'not-contender' && styles.notContenderActive,
-          ]}
-          onPress={() => onContenderClick('not-contender')}
-        >
-          <Text style={styles.contenderButtonText}>N</Text>
-        </TouchableOpacity>
-
         {/* Horse name */}
         <TouchableOpacity
           style={styles.nameContainer}
@@ -199,8 +151,8 @@ export default function HorseCard({
           >
             <Text style={styles.priceValue}>{horse.todays_betfair_place_sp || '-'}</Text>
           </TouchableOpacity>
-          <View style={[styles.statBox, getValueStyle()]}>
-            <Text style={styles.valueText}>{getValueText()}</Text>
+          <View style={[styles.statBox, styles.simPriceBox]}>
+            <Text style={styles.simPriceValue}>{horse.todays_sim_place_sp || '-'}</Text>
           </View>
         </View>
       </View>
@@ -420,29 +372,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
-  contenderButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 4,
-    backgroundColor: '#9ca3af',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 4,
-  },
-  contenderActive: {
-    backgroundColor: '#16a34a',
-  },
-  notContenderButton: {
-    backgroundColor: '#9ca3af',
-  },
-  notContenderActive: {
-    backgroundColor: '#dc2626',
-  },
-  contenderButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
   nameContainer: {
     flex: 1,
     flexDirection: 'row',
@@ -488,22 +417,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1e40af',
   },
-  valuePositive: {
-    backgroundColor: '#22c55e',
-  },
-  valueNegative: {
-    backgroundColor: '#ef4444',
-  },
-  valueLay: {
-    backgroundColor: '#a855f7',
-  },
-  valueNeutral: {
+  simPriceBox: {
     backgroundColor: '#e2e8f0',
   },
-  valueText: {
-    fontSize: 10,
+  simPriceValue: {
+    fontSize: 12,
     fontWeight: '600',
-    color: '#fff',
+    color: '#334155',
   },
   statsContainer: {
     flexDirection: 'row',

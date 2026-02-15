@@ -50,11 +50,6 @@ export function useProcessRaceData(fullData) {
         todays_place_percentage: info.place_percentage ?? null,
         todays_days_since_last_ran,
         number_of_runs: info.number_of_runs ?? null,
-        contender_status: info.contender_status ?? null,
-        value_percentage: info.value_percentage ?? null,
-        adjusted_odds: info.adjusted_odds ?? null,
-        is_value_lay: info.is_value_lay ?? null,
-        lay_value_percentage: info.lay_value_percentage ?? null,
         // Betfair IDs for betting
         todays_selection_id: info.selection_id ?? null,
         todays_market_id_win: info.market_id_win ?? null,

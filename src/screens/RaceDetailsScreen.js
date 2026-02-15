@@ -11,7 +11,7 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRaceFormFull, usePostContenderSelection, useDeleteContenderSelection, usePostBettingSelection } from '../api';
+import { useRaceFormFull, usePostBettingSelection } from '../api';
 import HorseCard from '../components/HorseCard';
 import TodaysRaceDetails from '../components/TodaysRaceDetails';
 import { useProcessRaceData } from '../hooks/useProcessRaceData';
@@ -20,7 +20,6 @@ export default function RaceDetailsScreen({ route, navigation }) {
   const { raceId, raceTitle } = route.params;
   const [visibleHorses, setVisibleHorses] = useState({});
   const [isMarketView, setIsMarketView] = useState(false);
-  const [contenderStatuses, setContenderStatuses] = useState({});
 
   const {
     data: fullData,
@@ -30,8 +29,6 @@ export default function RaceDetailsScreen({ route, navigation }) {
     isRefetching,
   } = useRaceFormFull('today', raceId);
 
-  const postContenderSelection = usePostContenderSelection('betting', raceId);
-  const deleteContenderSelection = useDeleteContenderSelection('betting', raceId);
   const postBettingSelection = usePostBettingSelection('betting');
 
   // Helper functions for payload
@@ -79,19 +76,6 @@ export default function RaceDetailsScreen({ route, navigation }) {
       return priceA - priceB;
     });
   }, [raceData]);
-
-  // Initialize contender statuses from API data
-  useEffect(() => {
-    if (sortedHorses.length > 0) {
-      const initialStatuses = {};
-      sortedHorses.forEach((horse) => {
-        if (horse.contender_status) {
-          initialStatuses[horse.horse_id] = horse.contender_status;
-        }
-      });
-      setContenderStatuses(initialStatuses);
-    }
-  }, [sortedHorses]);
 
   // Initialize visibility
   const resetVisibility = useCallback(() => {
@@ -157,35 +141,6 @@ export default function RaceDetailsScreen({ route, navigation }) {
     }));
   };
 
-  const handleContenderClick = (horse, status) => {
-    const currentStatus = contenderStatuses[horse.horse_id] || null;
-    const newStatus = currentStatus === status ? null : status;
-
-    // Optimistic update - update local state immediately
-    setContenderStatuses((prev) => {
-      if (!newStatus) {
-        const { [horse.horse_id]: _, ...rest } = prev;
-        return rest;
-      }
-      return { ...prev, [horse.horse_id]: newStatus };
-    });
-
-    if (!newStatus) {
-      deleteContenderSelection.mutate({ raceId, horseId: horse.horse_id });
-    } else {
-      postContenderSelection.mutate({
-        horse_id: horse.horse_id,
-        horse_name: horse.horse_name,
-        race_id: raceId,
-        race_date: raceData?.race_date,
-        race_time: raceData?.race_time,
-        selection_id: horse.todays_selection_id,
-        contender: newStatus === 'contender',
-        timestamp: new Date().toISOString(),
-      });
-    }
-  };
-
   const handlePriceClick = ({ horse, market, backLay, price, points }) => {
     // Check if selection_id is available (required for betting)
     if (!horse.todays_selection_id) {
@@ -241,8 +196,6 @@ export default function RaceDetailsScreen({ route, navigation }) {
     });
   };
 
-  const contenderCount = Object.values(contenderStatuses).filter(s => s === 'contender').length;
-
   if (isLoading) {
     return (
       <View style={styles.centered}>
@@ -276,14 +229,6 @@ export default function RaceDetailsScreen({ route, navigation }) {
             {isMarketView ? 'Show Form' : 'Market View'}
           </Text>
         </TouchableOpacity>
-
-        {contenderCount > 0 && (
-          <View style={styles.contenderBadge}>
-            <Text style={styles.contenderBadgeText}>
-              {contenderCount}/{sortedHorses.length} Contenders
-            </Text>
-          </View>
-        )}
       </View>
 
       {/* Fixed Race Details Header */}
@@ -298,11 +243,10 @@ export default function RaceDetailsScreen({ route, navigation }) {
         {sortedHorses.map((horse) => (
           <HorseCard
             key={horse.horse_id}
-            horse={{ ...horse, contender_status: contenderStatuses[horse.horse_id] || null }}
+            horse={horse}
             isVisible={visibleHorses[horse.horse_id]}
             isMarketView={isMarketView}
             onToggleVisibility={() => toggleHorseVisibility(horse.horse_id)}
-            onContenderClick={(status) => handleContenderClick(horse, status)}
             onPriceClick={handlePriceClick}
             raceData={raceData}
           />
@@ -365,17 +309,6 @@ const styles = StyleSheet.create({
   toggleButtonText: {
     fontWeight: '600',
     color: '#1e293b',
-  },
-  contenderBadge: {
-    marginLeft: 12,
-    backgroundColor: '#dcfce7',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  contenderBadgeText: {
-    color: '#166534',
-    fontWeight: '600',
   },
   scrollView: {
     flex: 1,

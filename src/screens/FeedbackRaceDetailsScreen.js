@@ -265,7 +265,6 @@ export default function FeedbackRaceDetailsScreen({ route, navigation }) {
                 isVisible={visibleHorses[horse.horse_id]}
                 isMarketView={isMarketView}
                 onToggleVisibility={() => toggleHorseVisibility(horse.horse_id)}
-                onContenderClick={() => { }}
                 onPriceClick={handlePriceClick}
                 raceData={raceData}
               />

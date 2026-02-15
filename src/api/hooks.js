@@ -57,51 +57,6 @@ export function useRaceFormFull(base = 'today', raceId, options = {}) {
   });
 }
 
-// Contender selections
-export function usePostContenderSelection(base = 'betting', raceId, options = {}) {
-  const url = buildPath(base, '/contender_selections');
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationKey: [base, 'contender_selections', 'create'],
-    mutationFn: async (body) =>
-      api(url, {
-        method: 'POST',
-        body: JSON.stringify(body),
-      }),
-    onSuccess: () => {
-      if (raceId) {
-        queryClient.invalidateQueries({
-          predicate: (query) =>
-            query.queryKey[1] === 'race-form-full' &&
-            String(query.queryKey[2]) === String(raceId),
-        });
-      }
-    },
-    ...options,
-  });
-}
-
-export function useDeleteContenderSelection(base = 'betting', raceId, options = {}) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationKey: [base, 'contender_selections', 'delete'],
-    mutationFn: async ({ raceId: rid, horseId }) => {
-      const url = buildPath(base, `/contender_selections/${rid}/${horseId}`);
-      return api(url, { method: 'DELETE' });
-    },
-    onSuccess: () => {
-      if (raceId) {
-        queryClient.invalidateQueries({
-          predicate: (query) =>
-            query.queryKey[1] === 'race-form-full' &&
-            String(query.queryKey[2]) === String(raceId),
-        });
-      }
-    },
-    ...options,
-  });
-}
-
 // Betting selection
 export function usePostBettingSelection(base = 'betting', options = {}) {
   const url = buildPath(base, '/selections');

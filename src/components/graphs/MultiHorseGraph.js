@@ -2,6 +2,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, Dimensions, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { Circle } from 'react-native-svg';
 import { colorPalette } from './utils';
 
 const screenWidth = Dimensions.get('window').width;
@@ -70,26 +71,49 @@ export default function MultiHorseGraph({ raceData, filter = 'rating', visibleHo
             return `${date.getDate()}/${date.getMonth() + 1}`;
         });
 
-        // Build datasets - use null-like handling by finding closest value or skipping
+        // Build datasets: interpolate line values across missing dates,
+        // but keep metadata so we only draw dots at real race dates.
         const datasets = horsesWithData.map(({ horse, color, perfs }) => {
-            const dataPoints = recentDates.map((date) => {
+            const rawByDate = recentDates.map((date) => {
                 const perf = perfs.find((p) => p.race_date === date);
-                // If horse didn't race on this date, return null (we'll filter later)
                 return perf ? perf[filter] : null;
             });
 
-            // react-native-chart-kit doesn't handle nulls well, so we need to 
-            // either interpolate or only plot this horse's actual races
-            // For now, replace null with previous valid value (flat line to show no change)
-            const filledData = [];
-            let lastValid = null;
-            for (const val of dataPoints) {
-                if (val !== null) {
-                    filledData.push(val);
-                    lastValid = val;
-                } else {
-                    // Use last valid value to create a flat line (or 0 if no previous)
-                    filledData.push(lastValid !== null ? lastValid : 0);
+            const actualPointIndexes = [];
+            rawByDate.forEach((val, idx) => {
+                if (val !== null) actualPointIndexes.push(idx);
+            });
+
+            const filledData = [...rawByDate];
+            if (actualPointIndexes.length) {
+                // Fill leading gap with first known value
+                const firstKnown = actualPointIndexes[0];
+                for (let i = 0; i < firstKnown; i++) {
+                    filledData[i] = rawByDate[firstKnown];
+                }
+
+                // Linearly interpolate between known points
+                for (let i = 0; i < actualPointIndexes.length - 1; i++) {
+                    const startIdx = actualPointIndexes[i];
+                    const endIdx = actualPointIndexes[i + 1];
+                    const startVal = rawByDate[startIdx];
+                    const endVal = rawByDate[endIdx];
+                    const span = endIdx - startIdx;
+
+                    for (let j = startIdx + 1; j < endIdx; j++) {
+                        const t = (j - startIdx) / span;
+                        filledData[j] = startVal + (endVal - startVal) * t;
+                    }
+                }
+
+                // Fill trailing gap with last known value
+                const lastKnown = actualPointIndexes[actualPointIndexes.length - 1];
+                for (let i = lastKnown + 1; i < filledData.length; i++) {
+                    filledData[i] = rawByDate[lastKnown];
+                }
+            } else {
+                for (let i = 0; i < filledData.length; i++) {
+                    filledData[i] = 0;
                 }
             }
 
@@ -97,6 +121,9 @@ export default function MultiHorseGraph({ raceData, filter = 'rating', visibleHo
                 data: filledData.length ? filledData : [0],
                 color: (opacity = 1) => color,
                 strokeWidth: 2,
+                withDots: false,
+                actualPointIndexes,
+                dotColor: color,
             };
         });
 
@@ -142,16 +169,64 @@ export default function MultiHorseGraph({ raceData, filter = 'rating', visibleHo
                 width={screenWidth - 32}
                 height={200}
                 chartConfig={chartConfig}
-                bezier
                 style={styles.chart}
                 withInnerLines={false}
                 withOuterLines={true}
                 withVerticalLines={false}
                 withHorizontalLines={true}
-                withDots={true}
+                withDots={false}
                 withShadow={false}
                 fromZero={false}
                 segments={4}
+                decorator={({ data, width, height, paddingTop, paddingRight }) => {
+                    const datasets = data || [];
+                    const allValues = datasets.flatMap((ds) => ds.data || []).filter((v) => Number.isFinite(v));
+                    if (!allValues.length) return null;
+
+                    const min = Math.min(...allValues);
+                    const max = Math.max(...allValues);
+                    const scaler = (max - min) || 1;
+                    const xMax = datasets.reduce((acc, ds) => Math.max(acc, (ds.data || []).length), 0) || 1;
+
+                    const calcBaseHeight = () => {
+                        if (min >= 0 && max >= 0) return height;
+                        if (min < 0 && max <= 0) return 0;
+                        return (height * max) / scaler;
+                    };
+
+                    const calcHeight = (val) => {
+                        if (min < 0 && max > 0) return height * (val / scaler);
+                        if (min >= 0 && max >= 0) return height * ((val - min) / scaler);
+                        return height * ((val - max) / scaler);
+                    };
+
+                    const baseHeight = calcBaseHeight();
+
+                    return datasets.map((dataset, dsIdx) => {
+                        const idxs = dataset.actualPointIndexes || [];
+                        const dotColor = dataset.dotColor || colorPalette[dsIdx % colorPalette.length];
+
+                        return idxs.map((pointIdx) => {
+                            const value = dataset.data?.[pointIdx];
+                            if (!Number.isFinite(value)) return null;
+
+                            const cx = paddingRight + (pointIdx * (width - paddingRight)) / xMax;
+                            const cy = ((baseHeight - calcHeight(value)) / 4) * 3 + paddingTop;
+
+                            return (
+                                <Circle
+                                    key={`${dsIdx}-${pointIdx}`}
+                                    cx={cx}
+                                    cy={cy}
+                                    r={3}
+                                    fill={dotColor}
+                                    stroke={dotColor}
+                                    strokeWidth={1}
+                                />
+                            );
+                        });
+                    });
+                }}
             />
             {/* Custom Legend */}
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.legendScroll}>
